@@ -1,0 +1,7 @@
+TWITCH_USERNAME=twitchuser
+OAUTH_PASSWORD=oauth:abunchofstuff
+CLIENT_ID=asdfasdfasdfasdf
+CLIENT_SECRET=asdfasdfasdfasdf
+SECRET_SECRET=some-guid-here
+CHAT_CLIENT_ID=asdfasdfasdf
+CHAT_ACCESS_TOKEN=asdfasdfasdf

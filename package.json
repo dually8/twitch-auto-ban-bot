@@ -1,0 +1,37 @@
+{
+  "name": "auto-ban-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && node dist/bot.js",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "dually8",
+  "license": "MIT",
+  "dependencies": {
+    "@twurple/api": "^5.0.1",
+    "@twurple/auth": "^5.0.1",
+    "@twurple/chat": "^5.0.1",
+    "@twurple/eventsub": "^5.0.1",
+    "@twurple/eventsub-ngrok": "^5.0.1",
+    "@twurple/pubsub": "^5.0.1",
+    "cross-env": "^7.0.3",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "handlebars": "^4.7.7",
+    "node-fetch": "^2.6.2",
+    "passport": "^0.4.1",
+    "passport-oauth": "^1.0.0",
+    "request": "^2.88.2",
+    "tmi.js": "^1.8.5",
+    "twitch-js": "^2.0.0-beta.42"
+  },
+  "devDependencies": {
+    "@types/node": "^16.9.1",
+    "@types/tmi.js": "^1.7.2",
+    "typescript": "^4.4.3"
+  }
+}
