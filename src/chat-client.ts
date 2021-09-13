@@ -2,8 +2,9 @@ import { StaticAuthProvider } from '@twurple/auth';
 import { ChatClient, ChatRaidInfo, UserNotice } from '@twurple/chat';
 import { TwitchPrivateMessage } from '@twurple/chat/lib/commands/TwitchPrivateMessage';
 import { shouldBanBasedOnUsername } from './banned_users';
+import { IChatClient } from './interfaces';
 
-export class AutoBanBotChatClient {
+export class AutoBanBotChatClient implements IChatClient {
     private readonly _chatClient: ChatClient;
     private _isConnected = false;
 
@@ -52,8 +53,8 @@ export class AutoBanBotChatClient {
         // }
     }
 
-    public ban(user: string, channel: string) {
-        this._chatClient.ban(channel, user, `Bot account`)
+    public ban(user: string, channel: string, reason = `Bot account`) {
+        this._chatClient.ban(channel, user, reason)
             .then(() => console.log(`Successfully banned ${user}`))
             .catch((err) => {
                 console.error({ banError: err });
@@ -122,7 +123,7 @@ export class AutoBanBotChatClient {
     private onMessage() {
         this._chatClient.onMessage((channel: string, user: string, message: string, pvtMsg: TwitchPrivateMessage) => {
             console.log(`${user} in ${channel} says '${message}'`);
-            if (message === '!saysomething') {
+            if (message.toLowerCase() === '!saysomething') {
                 this.say(channel, `You got somethin' to say to me?`);
             }
         });

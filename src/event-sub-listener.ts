@@ -2,7 +2,7 @@ import { EventSubListener, EventSubListenerConfig } from '@twurple/eventsub';
 import fetch from 'node-fetch';
 import { AutoBanBotApiClient } from './api-client';
 import { shouldBanBasedOnUsername } from './banned_users';
-import { AutoBanBotChatClient } from './chat-client';
+import { IChatClient } from './interfaces';
 
 export class AutoBanBotEventSubListener {
     private readonly _listener: EventSubListener;
@@ -11,7 +11,7 @@ export class AutoBanBotEventSubListener {
     constructor(
         private config: EventSubListenerConfig,
         private apiClient: AutoBanBotApiClient,
-        private chatClient: AutoBanBotChatClient,
+        private chatClient: IChatClient,
         private clientId: string,
         private clientSecret: string,
     ) {

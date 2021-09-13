@@ -21,8 +21,9 @@
 
 ## TODO
 
-- [] Better documentation
-- [] Maybe use other chat client. This one works only some of the time.
+- [ ] Better documentation
+- [x] Maybe use other chat client. This one works only some of the time.
+    - Using tmi.js for chat client since it works better.
 
 ## Further Reading
 
