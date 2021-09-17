@@ -1,24 +1,24 @@
+// Make it to where we can use process.env.WHATEVER
 require('dotenv').config();
 
-import { ClientCredentialsAuthProvider, StaticAuthProvider } from '@twurple/auth';
+import { ClientCredentialsAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 import { NgrokAdapter } from '@twurple/eventsub-ngrok';
 
 import { AutoBanBotApiClient } from './api-client';
-import { AutoBanBotChatClient } from './chat-client';
 import { AutoBanBotEventSubListener } from './event-sub-listener';
 import { TmiChatClient } from './tmi-chat-client';
+import { shouldBanBasedOnUsername } from './banned_users';
 
 const main = () => {
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
     const secret = process.env.SECRET_SECRET;
 
-    // get chat client id and access token from here
+    // get chat oauth token from here
     // https://chatterino.com/client_login/
-    const chatClientId = process.env.CHAT_CLIENT_ID;
-    const chatAccessToken = process.env.CHAT_ACCESS_TOKEN;
-    const chatUsename = process.env.TWITCH_USERNAME;
+    // or here https://twitchapps.com/tmi/
+    const chatUsername = process.env.TWITCH_USERNAME;
     const chatPassword = process.env.OAUTH_PASSWORD;
     const chatChannels = [
         'dually8',
@@ -26,11 +26,8 @@ const main = () => {
     ]
 
     const authProvider = new ClientCredentialsAuthProvider(clientId, clientSecret);
-
-    const chatAuthProvider = new StaticAuthProvider(chatClientId, chatAccessToken);
     const adapter = new NgrokAdapter();
     const autoBanBotApiClient = new AutoBanBotApiClient(authProvider);
-    // const autoBanBotChatClient = new AutoBanBotChatClient(chatAuthProvider, chatChannels);
     const autoBanBotChatClient = new TmiChatClient({
         channels: chatChannels.map(channel => `#${channel}`),
         connection: {
@@ -38,7 +35,7 @@ const main = () => {
             secure: true,
         },
         identity: {
-            username: chatUsename,
+            username: chatUsername,
             password: chatPassword,
         },
         // options: {
@@ -67,7 +64,16 @@ const main = () => {
             );
 
             await autoBanBotEventSubListener.clearAllSubscriptions();
-            autoBanBotEventSubListener.watchFollowEventsByUser('dually8');
+            chatChannels.forEach(async (chan) => {
+                // Get the latest followers
+                const followers = await autoBanBotApiClient.getFollowersByChannelName(chan);
+                // Filter them by the ones you want to ban
+                const followersToBan = followers.filter(x => shouldBanBasedOnUsername(x));
+                // Bring down the ban hammer
+                followersToBan.map(x => autoBanBotChatClient.ban(x, chan));
+                // Setup listener to watch for bot follows
+                autoBanBotEventSubListener.watchFollowEventsByUser(chan);
+            });
         })
         .catch((chatSetupError) => console.error({ chatSetupError }));
 }

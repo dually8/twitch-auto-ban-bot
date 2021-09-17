@@ -23,4 +23,27 @@ export class AutoBanBotApiClient {
             console.error({ getUserInfoError: err });
         }
     }
+
+    public async getFollowersByChannelName(channelName: string) {
+        try {
+            const userInfo = await this.getUserInfo(channelName);
+            return await this.getFollowersByChannelId(userInfo.id);
+        } catch (err) {
+            console.error({ getFollowersByChannelName: err });
+            throw err;
+        }
+    }
+
+    public async getFollowersByChannelId(id: string) {
+        try {
+            const result = await this._apiClient.users.getFollows({
+                followedUser: id,
+            });
+            return result.data.map(x => x.userName);
+        } catch (err) {
+            console.error({ getFollowersByChannelIdError: err });
+            throw err;
+        }
+
+    }
 }

@@ -12,6 +12,7 @@ export const bannedUserList = [
     'host00312',
     'hoss00312__',
     'h0sso0312',
+    'hoss00312_is_unstoppable',
     '2603_6000_ba07_8c751_cc60',
     'rememberlunasec',
     '2600_6c5e_5b7f_fdcd_venom',
