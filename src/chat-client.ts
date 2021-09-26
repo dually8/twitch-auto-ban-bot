@@ -3,6 +3,7 @@ import { ChatClient, ChatRaidInfo, UserNotice } from '@twurple/chat';
 import { TwitchPrivateMessage } from '@twurple/chat/lib/commands/TwitchPrivateMessage';
 import { shouldBanBasedOnUsername } from './banned_users';
 import { IChatClient } from './interfaces';
+import { Logger } from './logger';
 
 export class AutoBanBotChatClient implements IChatClient {
     private readonly _chatClient: ChatClient;
@@ -32,32 +33,19 @@ export class AutoBanBotChatClient implements IChatClient {
             this.onMessage();
             await this.connect();
         } catch (err) {
-            console.error({ setupError: err });
+            Logger.getInstance().log.error({ setupError: err });
         }
     }
 
     public async say(channel: string, msg: string) {
         await this._chatClient.say(channel, msg);
-        // try {
-        //     if (!this.isConnected) {
-        //         console.log('Please connect first before sending a message.');
-        //         throw new Error('Need to connect first.');
-        //     }
-        //     if (this._channels.indexOf(channel) > -1) {
-        //         await this._chatClient.say(channel, msg);
-        //     } else {
-        //         throw new Error(`Channel ${channel} is not in the list of provided channels.`);
-        //     }
-        // } catch (err) {
-        //     console.error({ sayError: err });
-        // }
     }
 
     public ban(user: string, channel: string, reason = `Bot account`) {
         this._chatClient.ban(channel, user, reason)
-            .then(() => console.log(`Successfully banned ${user}`))
+            .then(() => Logger.getInstance().log.info(`Successfully banned ${user}`))
             .catch((err) => {
-                console.error({ banError: err });
+                Logger.getInstance().log.error({ banError: err });
                 this._chatClient.getMods(channel)
                     .then((mods) => {
                         this.say(channel, `I could not automatically ban ${user}. Moderator(s) ${mods.join(', ')}, please do this for me.`);
@@ -67,30 +55,30 @@ export class AutoBanBotChatClient implements IChatClient {
 
     private async connect() {
         try {
-            console.log('trying to connect...');
+            Logger.getInstance().log.info('trying to connect...');
             if (!this.isConnected) {
                 await this._chatClient.connect();
                 this._isConnected = true;
-                console.log('connected :)');
+                Logger.getInstance().log.info('connected :)');
             } else {
-                console.log('Already connected');
+                Logger.getInstance().log.info('Already connected');
             }
         } catch (err) {
-            console.error({ chatClientConnectionError: err })
+            Logger.getInstance().log.error({ chatClientConnectionError: err })
         }
     }
 
     private onConnect() {
         this._chatClient.onConnect(() => {
-            console.log('We are connected!');
+            Logger.getInstance().log.info('We are connected!');
         });
     }
 
     private onJoin() {
         this._chatClient.onJoin((channel: string, user: string) => {
-            console.log(`${user} has joined ${channel}`);
+            Logger.getInstance().log.info(`${user} has joined ${channel}`);
             if (shouldBanBasedOnUsername(user)) {
-                console.log(`Banning ${user}. Probably a bot.`);
+                Logger.getInstance().log.info(`Banning ${user}. Probably a bot.`);
                 this.ban(user, channel);
             }
         });
@@ -99,7 +87,7 @@ export class AutoBanBotChatClient implements IChatClient {
     private onBan() {
         this._chatClient.onBan((channel: string, user: string) => {
             const _msg = `${user} has been banned from ${channel}`;
-            console.log(_msg);
+            Logger.getInstance().log.info(_msg);
             this.say(channel, _msg);
         });
     }
@@ -107,7 +95,7 @@ export class AutoBanBotChatClient implements IChatClient {
     private onHost() {
         this._chatClient.onHost((host: string, channelBeingHosted: string, viewers: number) => {
             const _msg = `${host} is hosting ${channelBeingHosted} with ${viewers} viewer(s).`;
-            console.log(_msg);
+            Logger.getInstance().log.info(_msg);
             this.say(channelBeingHosted, _msg);
         });
     }
@@ -115,14 +103,14 @@ export class AutoBanBotChatClient implements IChatClient {
     private onRaid() {
         this._chatClient.onRaid((channel: string, user: string, raidInfo: ChatRaidInfo, msg: UserNotice) => {
             const _msg = `${user} is raiding ${channel} with ${raidInfo?.viewerCount} viewer(s)!`;
-            console.log(_msg);
+            Logger.getInstance().log.info(_msg);
             this.say(channel, _msg);
         });
     }
 
     private onMessage() {
         this._chatClient.onMessage((channel: string, user: string, message: string, pvtMsg: TwitchPrivateMessage) => {
-            console.log(`${user} in ${channel} says '${message}'`);
+            Logger.getInstance().log.info(`${user} in ${channel} says '${message}'`);
             if (message.toLowerCase() === '!saysomething') {
                 this.say(channel, `You got somethin' to say to me?`);
             }

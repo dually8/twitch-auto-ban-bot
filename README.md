@@ -18,6 +18,7 @@
     - For `SECRET_SECRET`, just write up a really long string. I used a GUID generator for mine.
     - For `TWITCH_USERNAME`, use your username or your bots username. This will be the same account you used to get the `OAUTH_PASSWORD`.
 3. Run `npm start`.
+4. To use the file logger, create a directory `twitch-bot-logs` in the `/dist` folder.
 
 ## TODO
 

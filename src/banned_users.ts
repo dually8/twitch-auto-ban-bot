@@ -36,9 +36,10 @@ export const bannedUserList = [
     'hoss00312_guess',
     'hoss00312_wax',
     'halfaches',
+    'ho03012ss',
 ];
 
-export const hosRegex = /(h.s+.*312)/gi;
+export const hosRegex = /(h.s+.*312)|(h.*3.*2)/gi;
 
 export function shouldBanBasedOnUsername(username: string) {
     const matchesHosRegex = (hosRegex.test(username.toLowerCase()));

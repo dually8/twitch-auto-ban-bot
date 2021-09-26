@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 import { AutoBanBotApiClient } from './api-client';
 import { shouldBanBasedOnUsername } from './banned_users';
 import { IChatClient } from './interfaces';
+import { Logger } from './logger';
 
 export class AutoBanBotEventSubListener {
     private readonly _listener: EventSubListener;
@@ -25,7 +26,7 @@ export class AutoBanBotEventSubListener {
             if (userId) {
                 this._listener.subscribeToChannelFollowEvents(userId, (event) => {
                     const shouldBanUser = shouldBanBasedOnUsername(event.userName);
-                    console.log({
+                    Logger.getInstance().log.info({
                         followEvent: event,
                         shouldBanUser,
                     });
@@ -34,15 +35,15 @@ export class AutoBanBotEventSubListener {
                     if (!shouldBanUser) {
                         this.chatClient.say(channel, `Thank you for following ${follower}!`);
                     } else {
-                        console.log(`Banning new follower ${follower}. Probably a bot.`);
+                        Logger.getInstance().log.info(`Banning new follower ${follower}. Probably a bot.`);
                         this.chatClient.ban(follower, channel);
                     }
-                }).catch((followEventError) => console.error({ followEventError }));
+                }).catch((followEventError) => Logger.getInstance().log.error({ followEventError }));
             } else {
                 throw new Error(`Could not retrieve userId from ${user}`);
             }
         } catch (err) {
-            console.error({
+            Logger.getInstance().log.error({
                 watchFollowEventsByUserError: err
             });
         }
@@ -53,15 +54,15 @@ export class AutoBanBotEventSubListener {
             const userId = await this.getId(user);
             if (userId) {
                 this._listener.subscribeToChannelUpdateEvents(userId, (event) => {
-                    console.log({
+                    Logger.getInstance().log.info({
                         channelUpdateEvent: event,
                     });
-                }).catch((channelUpdateError) => console.error({ channelUpdateError }));
+                }).catch((channelUpdateError) => Logger.getInstance().log.error({ channelUpdateError }));
             } else {
                 throw new Error(`Could not retrieve userId from ${user}`);
             }
         } catch (err) {
-            console.error({
+            Logger.getInstance().log.error({
                 watchChannelUpdateError: err
             });
         }
@@ -72,14 +73,14 @@ export class AutoBanBotEventSubListener {
             await this.setBearerToken();
             const events = await this.getEvents();
             if (events && events.data && events.data.length > 0) {
-                console.log(`Clearing ${events.data.length} event(s)`);
+                Logger.getInstance().log.info(`Clearing ${events.data.length} event(s)`);
                 await Promise.all(events.data.map(e => this.deleteEventSubscription(e.id)));
-                console.log(`Done clearing events`);
+                Logger.getInstance().log.info(`Done clearing events`);
             } else {
-                console.log(`No events to clear`);
+                Logger.getInstance().log.info(`No events to clear`);
             }
         } catch (err) {
-            console.error({
+            Logger.getInstance().log.error({
                 clearAllSubsError: err,
             });
         }
@@ -88,9 +89,9 @@ export class AutoBanBotEventSubListener {
     private async listen() {
         try {
             await this._listener.listen();
-            console.log('listening...');
+            Logger.getInstance().log.info('listening...');
         } catch (err) {
-            console.error({ listenError: err });
+            Logger.getInstance().log.error({ listenError: err });
         }
     }
 

@@ -9,6 +9,7 @@ import { AutoBanBotApiClient } from './api-client';
 import { AutoBanBotEventSubListener } from './event-sub-listener';
 import { TmiChatClient } from './tmi-chat-client';
 import { shouldBanBasedOnUsername } from './banned_users';
+import { Logger } from './logger';
 
 const main = () => {
     const clientId = process.env.CLIENT_ID;
@@ -69,13 +70,19 @@ const main = () => {
                 const followers = await autoBanBotApiClient.getFollowersByChannelName(chan);
                 // Filter them by the ones you want to ban
                 const followersToBan = followers.filter(x => shouldBanBasedOnUsername(x));
+                if (followersToBan.length > 0) {
+                    Logger.getInstance().log.info(`Need to ban ${followersToBan.join(', ')} on channel ${chan}`);
+                } else {
+                    Logger.getInstance().log.info(`No one to ban on channel ${chan} :D`);
+                }
                 // Bring down the ban hammer
                 followersToBan.map(x => autoBanBotChatClient.ban(x, chan));
                 // Setup listener to watch for bot follows
                 autoBanBotEventSubListener.watchFollowEventsByUser(chan);
             });
+            Logger.getInstance().log.debug('Ready to go!');
         })
-        .catch((chatSetupError) => console.error({ chatSetupError }));
+        .catch((chatSetupError) => Logger.getInstance().log.error({ chatSetupError }));
 }
 
 main();

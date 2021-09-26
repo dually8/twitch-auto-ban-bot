@@ -1,6 +1,7 @@
 import * as tmi from 'tmi.js';
 import { shouldBanBasedOnUsername } from './banned_users';
 import { IChatClient } from "./interfaces";
+import { Logger } from './logger';
 
 export class TmiChatClient implements IChatClient {
     private readonly _chatClient: tmi.Client;
@@ -24,23 +25,23 @@ export class TmiChatClient implements IChatClient {
             this.onMessage();
             await this.connect();
         } catch (err) {
-            console.error({ setupError: err });
+            Logger.getInstance().log.error({ setupError: err });
         }
     }
     public async say(channel: string, msg: string): Promise<void> {
         try {
             await this._chatClient.say(channel, msg);
         } catch (err) {
-            console.error({
+            Logger.getInstance().log.error({
                 sayErr: err
             });
         }
     }
     ban(user: string, channel: string, reason: string = 'Bot account'): void {
         this._chatClient.ban(channel, user, reason)
-            .then(() => console.log(`Successfully banned ${user}`))
+            .then(() => Logger.getInstance().log.info(`Successfully banned ${user}`))
             .catch((err) => {
-                console.error({ banError: err });
+                Logger.getInstance().log.error({ banError: err });
                 this._chatClient.mods(channel)
                     .then((mods) => {
                         this.say(channel, `I could not automatically ban ${user}. Moderator(s) ${mods.join(', ')}, please do this for me.`);
@@ -50,48 +51,48 @@ export class TmiChatClient implements IChatClient {
 
     private async connect() {
         try {
-            console.log('trying to connect...');
+            Logger.getInstance().log.info('trying to connect...');
             if (!this.isConnected) {
                 await this._chatClient.connect();
-                console.log('connected :)');
+                Logger.getInstance().log.info('connected :)');
             } else {
-                console.log('Already connected');
+                Logger.getInstance().log.info('Already connected');
             }
         } catch (err) {
-            console.error({ chatClientConnectionError: err })
+            Logger.getInstance().log.error({ chatClientConnectionError: err })
         }
     }
     private async onConnect() {
         this._chatClient.on('connected', (address, port) => {
-            console.log(`Connected on ${address}:${port}`);
+            Logger.getInstance().log.info(`Connected on ${address}:${port}`);
             this._isConnected = true;
         });
     }
     private async onDisconnect() {
         this._chatClient.on('disconnected', (reason) => {
             this._isConnected = false;
-            console.log(`Got disconnected: ${reason}`);
+            Logger.getInstance().log.info(`Got disconnected: ${reason}`);
         });
     }
     private onJoin() {
         this._chatClient.on('join', (channel, username, self) => {
-            console.log({
+            Logger.getInstance().log.info({
                 onJoin: {
                     channel, username, self
                 }
             });
             if (self) return;
             if (shouldBanBasedOnUsername(username)) {
-                console.log(`Banning ${username}. User matched bannable list/regex.`);
+                Logger.getInstance().log.info(`Banning ${username}. User matched bannable list/regex.`);
                 this.ban(username, channel);
             }
         });
     }
     private onBan() {
-        this._chatClient.on('ban', (channel, username, reason, userstate) => {
-            console.log({
+        this._chatClient.on('ban', (channel, username, reason) => {
+            Logger.getInstance().log.info({
                 onBan: {
-                    channel, username, reason, userstate
+                    channel, username, reason
                 }
             });
             this.say(channel, `${username} was banned.`);
@@ -99,7 +100,7 @@ export class TmiChatClient implements IChatClient {
     }
     private onHost() {
         this._chatClient.on('hosted', (channel, username, viewers, autohost) => {
-            console.log({
+            Logger.getInstance().log.info({
                 onHost: {
                     channel, username, viewers, autohost,
                 }
@@ -109,7 +110,7 @@ export class TmiChatClient implements IChatClient {
     }
     private onRaid() {
         this._chatClient.on('raided', (channel, username, viewers) => {
-            console.log({
+            Logger.getInstance().log.info({
                 onRaid: {
                     channel, username, viewers
                 }
@@ -121,7 +122,7 @@ export class TmiChatClient implements IChatClient {
         this._chatClient.on('message', (channel, userstate, message, self) => {
             if (self) return;
             const user = userstate.username;
-            console.log(`${user} in ${channel} says '${message}'`);
+            Logger.getInstance().log.info(`${user} in ${channel} says '${message}'`);
             if (message.toLowerCase() === '!saysomething') {
                 this.say(channel, `You got somethin' to say to me?`);
             }

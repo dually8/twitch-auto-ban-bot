@@ -1,5 +1,6 @@
 import { ClientCredentialsAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
+import { Logger } from './logger';
 
 export class AutoBanBotApiClient {
     private readonly _apiClient: ApiClient;
@@ -20,7 +21,7 @@ export class AutoBanBotApiClient {
                 creationDate: result.creationDate,
             }
         } catch (err) {
-            console.error({ getUserInfoError: err });
+            Logger.getInstance().log.error({ getUserInfoError: err });
         }
     }
 
@@ -29,7 +30,7 @@ export class AutoBanBotApiClient {
             const userInfo = await this.getUserInfo(channelName);
             return await this.getFollowersByChannelId(userInfo.id);
         } catch (err) {
-            console.error({ getFollowersByChannelName: err });
+            Logger.getInstance().log.error({ getFollowersByChannelName: err });
             throw err;
         }
     }
@@ -41,7 +42,7 @@ export class AutoBanBotApiClient {
             });
             return result.data.map(x => x.userName);
         } catch (err) {
-            console.error({ getFollowersByChannelIdError: err });
+            Logger.getInstance().log.error({ getFollowersByChannelIdError: err });
             throw err;
         }
 
