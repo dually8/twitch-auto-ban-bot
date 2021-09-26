@@ -32,6 +32,10 @@ export const bannedUserList = [
     'ily_shiba',
     'golang_ontop',
     'xbstuart265',
+    'hoss00312_erratic',
+    'hoss00312_guess',
+    'hoss00312_wax',
+    'halfaches',
 ];
 
 export const hosRegex = /(h.s+.*312)/gi;
