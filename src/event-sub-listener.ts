@@ -1,7 +1,7 @@
 import { EventSubListener, EventSubListenerConfig } from '@twurple/eventsub';
 import fetch from 'node-fetch';
 import { AutoBanBotApiClient } from './api-client';
-import { shouldBanBasedOnUsername } from './banned_users';
+import { shouldBanBasedOnCreationDate, shouldBanBasedOnUsername } from './banned_users';
 import { IChatClient } from './interfaces';
 import { Logger } from './logger';
 
@@ -24,15 +24,18 @@ export class AutoBanBotEventSubListener {
         try {
             const userId = await this.getId(user);
             if (userId) {
-                this._listener.subscribeToChannelFollowEvents(userId, (event) => {
+                this._listener.subscribeToChannelFollowEvents(userId, async (event) => {
+                    const userInfo = await this.apiClient.getUserInfo(event.userName);
+                    const shouldBanDate = shouldBanBasedOnCreationDate(userInfo?.creationDate);
                     const shouldBanUser = shouldBanBasedOnUsername(event.userName);
                     Logger.getInstance().log.info({
                         followEvent: event,
                         shouldBanUser,
+                        shouldBanDate,
                     });
                     const channel = event.broadcasterName;
                     const follower = event.userName;
-                    if (!shouldBanUser) {
+                    if (!shouldBanUser && !shouldBanDate) {
                         this.chatClient.say(channel, `Thank you for following ${follower}!`);
                     } else {
                         Logger.getInstance().log.info(`Banning new follower ${follower}. Probably a bot.`);

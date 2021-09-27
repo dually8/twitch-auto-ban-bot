@@ -45,6 +45,5 @@ export class AutoBanBotApiClient {
             Logger.getInstance().log.error({ getFollowersByChannelIdError: err });
             throw err;
         }
-
     }
 }
