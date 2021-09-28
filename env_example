@@ -5,3 +5,6 @@ CLIENT_SECRET=asdfasdfasdfasdf
 SECRET_SECRET=some-guid-here
 CHAT_CLIENT_ID=asdfasdfasdf
 CHAT_ACCESS_TOKEN=asdfasdfasdf
+STREAMLABS_CLIENT_ID=asdfasdfasdf
+STREAMLABS_CLIENT_SECRET=asdfasdfasdf
+REDIRECT_URI=http://localhost:8080/auth

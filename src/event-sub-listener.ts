@@ -1,22 +1,37 @@
 import { EventSubListener, EventSubListenerConfig } from '@twurple/eventsub';
 import fetch from 'node-fetch';
+import axios from 'axios';
 import { AutoBanBotApiClient } from './api-client';
 import { shouldBanBasedOnCreationDate, shouldBanBasedOnUsername } from './banned_users';
 import { IChatClient } from './interfaces';
 import { Logger } from './logger';
+import { StreamlabsApiClient } from './streamlabs/streamlabs-api-client';
+import { StreamlabsApiRepo } from './streamlabs/streamlabs-api-repo';
 
+export type EventSubListenerParams = {
+    config: EventSubListenerConfig;
+    apiClient: AutoBanBotApiClient;
+    streamlabsClient: StreamlabsApiClient;
+    chatClient: IChatClient;
+    clientId: string;
+    clientSecret: string;
+}
 export class AutoBanBotEventSubListener {
     private readonly _listener: EventSubListener;
     private _bearerToken = '';
 
-    constructor(
-        private config: EventSubListenerConfig,
-        private apiClient: AutoBanBotApiClient,
-        private chatClient: IChatClient,
-        private clientId: string,
-        private clientSecret: string,
-    ) {
-        this._listener = new EventSubListener(config);
+    private get apiClient() {
+        return this.params.apiClient;
+    }
+    private get chatClient() {
+        return this.params.chatClient;
+    }
+    private get streamlabsClient() {
+        return this.params.streamlabsClient;
+    }
+
+    constructor(private params: EventSubListenerParams) {
+        this._listener = new EventSubListener(this.params.config);
         this.listen();
     }
 
@@ -40,6 +55,10 @@ export class AutoBanBotEventSubListener {
                     } else {
                         Logger.getInstance().log.info(`Banning new follower ${follower}. Probably a bot.`);
                         this.chatClient.ban(follower, channel);
+                        const accessToken = await StreamlabsApiRepo.getAccessToken();
+                        if (accessToken) {
+                            this.streamlabsClient.skipAlert();
+                        }
                     }
                 }).catch((followEventError) => Logger.getInstance().log.error({ followEventError }));
             } else {
@@ -104,31 +123,29 @@ export class AutoBanBotEventSubListener {
     }
 
     private async deleteEventSubscription(id: string) {
-        await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${id}`, {
-            method: 'DELETE',
+        await axios.delete(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${id}`, {
             headers: {
                 Authorization: `Bearer ${this._bearerToken}`,
-                'Client-ID': this.clientId,
-            },
+                'Client-ID': this.params.clientId,
+            }
         });
     }
 
     private async getEvents() {
-        return await fetch(
+        return await axios.get(
             `https://api.twitch.tv/helix/eventsub/subscriptions`,
             {
                 headers: {
                     Authorization: `Bearer ${this._bearerToken}`,
-                    'Client-ID': this.clientId,
+                    'Client-ID': this.params.clientId,
                 },
             },
-        ).then((response) => response.json()) as { data: EventDataResponse[] };
+        ).then((response) => response && response.data) as { data: EventDataResponse[] };
     }
 
     private async setBearerToken() {
-        const url = `https://id.twitch.tv/oauth2/token?client_id=${this.clientId}&client_secret=${this.clientSecret}&grant_type=client_credentials`;
-
-        const result = await fetch(url, { method: 'POST' }).then(res => res.json()) as { access_token: string, expires_in: number, token_type: string };
+        const url = `https://id.twitch.tv/oauth2/token?client_id=${this.params.clientId}&client_secret=${this.params.clientSecret}&grant_type=client_credentials`;
+        const result = await axios.post(url).then(res => res && res.data) as { access_token: string, expires_in: number, token_type: string };
         this._bearerToken = result.access_token;
     }
 }

@@ -17,14 +17,13 @@
     - For `CLIENT_ID` and `CLIENT_SECRET`, register an application at https://dev.twitch.tv/console/apps
     - For `SECRET_SECRET`, just write up a really long string. I used a GUID generator for mine.
     - For `TWITCH_USERNAME`, use your username or your bots username. This will be the same account you used to get the `OAUTH_PASSWORD`.
-3. Run `npm start`.
-4. To use the file logger, create a directory `twitch-bot-logs` in the `/dist` folder.
-
-## TODO
-
-- [ ] Better documentation
-- [x] Maybe use other chat client. This one works only some of the time.
-    - Using tmi.js for chat client since it works better.
+    - For `STREAMLABS_CLIENT_ID`, you must get that from registering an app on streamlabs
+      - https://streamlabs.com/dashboard#/settings/api-settings
+    - For `STREAMLABS_CLIENT_SECRET`, it will be the same as above
+    - For `REDIRECT_URI`, you can leave that as `http://localhost:8080/auth` unless you want to change the port you run the fastify server on (see `src/streamlabs/streamlabs-api-server.ts`);
+3. Create an empty file `token.db` in the root of the project. This will be the sqlite db we save our streamlabs tokens too.
+4. Run `npm start`.
+5. To use the file logger, create a directory `twitch-bot-logs` in the `/dist` folder.
 
 ## Further Reading
 
