@@ -7,6 +7,7 @@ export const bannedUserList = [
     '2603_6000_ba07_8c751_cc60',
     'clickonmeplease',
     'clickonmeplease4',
+    'davicito14_',
     'golang_ontop',
     'guchkada',
     'guglvyda',
