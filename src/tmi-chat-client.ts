@@ -1,5 +1,6 @@
 import * as tmi from 'tmi.js';
 import { shouldBanBasedOnUsername } from './banned_users';
+import { shouldBanBasedOnTerm } from './blocked-terms';
 import { IChatClient } from "./interfaces";
 import { Logger } from './logger';
 
@@ -44,7 +45,7 @@ export class TmiChatClient implements IChatClient {
                 Logger.getInstance().log.error({ banError: err });
                 this._chatClient.mods(channel)
                     .then((mods) => {
-                        this.say(channel, `I could not automatically ban ${user}. Moderator(s) ${mods.join(', ')}, please do this for me.`);
+                        this.say(channel, `I could not automatically ban @${user}. Moderator(s) @${mods.join(', @')}, please do this for me.`);
                     });
             });
     }
@@ -119,12 +120,22 @@ export class TmiChatClient implements IChatClient {
         });
     }
     private onMessage() {
-        this._chatClient.on('message', (channel, userstate, message, self) => {
+        this._chatClient.on('message', async (channel, userstate, message, self) => {
             if (self) return;
             const user = userstate.username;
             Logger.getInstance().log.info(`${user} in ${channel} says '${message}'`);
             if (message.toLowerCase() === '!saysomething') {
-                this.say(channel, `You got somethin' to say to me?`);
+                this.say(channel, `You got somethin' to say to me, @${user}?`);
+            } else if (shouldBanBasedOnTerm(message)) {
+                const vips = await this._chatClient.vips(channel);
+                const mods = await this._chatClient.mods(channel);
+                const broadcaster = channel.replace('#', '');
+                if (![...vips, ...mods, broadcaster].includes(user)) {
+                    this.ban(userstate.username, channel, 'Using banned term');
+                } else {
+                    Logger.getInstance().log.info(`${user} in ${channel} is either a mod, vip, or the broadcaster, so we won't ban them for saying a bad word.`)
+                    this.say(channel, `Watch your mouth @${user}. That's a banned term. Do it again and I'll smack you.`);
+                }
             }
         });
     }
