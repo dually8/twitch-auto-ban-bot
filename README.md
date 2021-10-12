@@ -28,7 +28,8 @@
 
 ## TODO
 
-- [ ] Figure out better way to debug with vscode
+- [x] Figure out better way to debug with vscode
+    - Added ts-node. See new `.vscode/launch.json`.
 - [ ] Figure out better way to use fastify or express with typescript
 
 ## Further Reading

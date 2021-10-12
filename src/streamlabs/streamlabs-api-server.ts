@@ -72,6 +72,7 @@ export class StreamlabsApiServer {
                 if (err) {
                     Logger.getInstance().log.error(`Error starting fastify server: ${err.message}`);
                     Logger.getInstance().log.error({err});
+                    this.server.log.error(err);
                     reject(err);
                     process.exit(1);
                 }

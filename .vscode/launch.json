@@ -7,13 +7,17 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch bot.ts",
-            "program": "${workspaceFolder}/src/bot.ts",
-            "preLaunchTask": "tsc: build - tsconfig.json",
-            "outFiles": [
-                "${workspaceFolder}/dist/*.js",
-                "!**/node_modules/**"
-            ]
+            "name": "Launch Program",
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register"
+            ],
+            "args": [
+                "${workspaceFolder}/src/bot.ts"
+            ],
+            "env": {
+                "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json"
+            }
         }
     ]
 }
