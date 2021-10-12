@@ -8,3 +8,4 @@ CHAT_ACCESS_TOKEN=asdfasdfasdf
 STREAMLABS_CLIENT_ID=asdfasdfasdf
 STREAMLABS_CLIENT_SECRET=asdfasdfasdf
 REDIRECT_URI=http://localhost:8080/auth
+FASTIFY_PORT=8080

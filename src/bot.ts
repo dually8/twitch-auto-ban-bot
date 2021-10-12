@@ -63,8 +63,9 @@ const main = async () => {
     const streamlabsClient = new StreamlabsApiClient(streamlabsServer);
 
     try {
-        await streamlabsServer.setup();
-        open('http://localhost:8080');
+        const port = parseInt(process.env.FASTIFY_PORT, 10) || 8080;
+        await streamlabsServer.setup(port);
+        open(`http://localhost:${port}`);
     } catch (err) {
         Logger.getInstance().log.error(`Couldn't setup server`, { err });
     }

@@ -20,10 +20,16 @@
     - For `STREAMLABS_CLIENT_ID`, you must get that from registering an app on streamlabs
       - https://streamlabs.com/dashboard#/settings/api-settings
     - For `STREAMLABS_CLIENT_SECRET`, it will be the same as above
-    - For `REDIRECT_URI`, you can leave that as `http://localhost:8080/auth` unless you want to change the port you run the fastify server on (see `src/streamlabs/streamlabs-api-server.ts`);
+    - For `FASTIFY_PORT`, you can leave this as `3000` if you like. Just be sure to mark the correct port on `REDIRECT_URI` as well
+    - For `REDIRECT_URI`, you can leave that as `http://localhost:3000/auth` unless you want to change the port you run the fastify server on (see `src/streamlabs/streamlabs-api-server.ts`);
 3. Create an empty file `token.db` in the root of the project. This will be the sqlite db we save our streamlabs tokens too.
 4. Run `npm start`.
 5. To use the file logger, create a directory `twitch-bot-logs` in the `/dist` folder.
+
+## TODO
+
+- [ ] Figure out better way to debug with vscode
+- [ ] Figure out better way to use fastify or express with typescript
 
 ## Further Reading
 
