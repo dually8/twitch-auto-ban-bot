@@ -1,5 +1,4 @@
 import { EventSubListener, EventSubListenerConfig } from '@twurple/eventsub';
-import fetch from 'node-fetch';
 import axios from 'axios';
 import { AutoBanBotApiClient } from './api-client';
 import { shouldBanBasedOnCreationDate, shouldBanBasedOnUsername } from './banned_users';
@@ -39,28 +38,7 @@ export class AutoBanBotEventSubListener {
         try {
             const userId = await this.getId(user);
             if (userId) {
-                this._listener.subscribeToChannelFollowEvents(userId, async (event) => {
-                    const userInfo = await this.apiClient.getUserInfo(event.userName);
-                    const shouldBanDate = shouldBanBasedOnCreationDate(userInfo?.creationDate);
-                    const shouldBanUser = shouldBanBasedOnUsername(event.userName);
-                    Logger.getInstance().log.info({
-                        followEvent: event,
-                        shouldBanUser,
-                        shouldBanDate,
-                    });
-                    const channel = event.broadcasterName;
-                    const follower = event.userName;
-                    if (!shouldBanUser && !shouldBanDate) {
-                        this.chatClient.say(channel, `Thank you for following ${follower}!`);
-                    } else {
-                        Logger.getInstance().log.info(`Banning new follower ${follower}. Probably a bot.`);
-                        this.chatClient.ban(follower, channel);
-                        const accessToken = await StreamlabsApiRepo.getAccessToken();
-                        if (accessToken) {
-                            this.streamlabsClient.skipAlert();
-                        }
-                    }
-                }).catch((followEventError) => Logger.getInstance().log.error({ followEventError }));
+                this.subscribeToChannelFollowEvents(userId);
             } else {
                 throw new Error(`Could not retrieve userId from ${user}`);
             }
@@ -68,6 +46,42 @@ export class AutoBanBotEventSubListener {
             Logger.getInstance().log.error({
                 watchFollowEventsByUserError: err
             });
+        }
+    }
+
+    private async subscribeToChannelFollowEvents(userId: string) {
+        try {
+            await this._listener.subscribeToChannelFollowEvents(userId, async (event) => {
+                const userInfo = await this.apiClient.getUserInfo(event.userName);
+                const isBannableDate = shouldBanBasedOnCreationDate(userInfo?.creationDate);
+                const isBannableUsername = shouldBanBasedOnUsername(event.userName);
+                Logger.getInstance().log.info({
+                    followEvent: event,
+                    isBannableUsername,
+                    isBannableDate,
+                });
+                const channel = event.broadcasterName;
+                const follower = event.userName;
+                if (isBannableUsername || isBannableDate) {
+                    await this.banFollower(follower, channel);
+                } else {
+                    this.chatClient.say(channel, `Thank you for following ${follower}!`);
+                }
+            })
+        } catch (followEventError) {
+            Logger.getInstance().log.error({ followEventError })
+        }
+    }
+
+    private async banFollower(follower: string, channel: string) {
+        Logger.getInstance().log.info(`Banning new follower ${follower}. Probably a bot.`);
+        this.chatClient.ban(follower, channel);
+        // TODO: Replace this channel with your own if you're not dually8
+        if (channel.includes('dually8')) {
+            const accessToken = await StreamlabsApiRepo.getAccessToken();
+            if (accessToken) {
+                this.streamlabsClient.skipAlert();
+            }
         }
     }
 

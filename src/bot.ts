@@ -4,15 +4,12 @@ require('dotenv').config();
 import { ClientCredentialsAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 import { NgrokAdapter } from '@twurple/eventsub-ngrok';
-import fastify from 'fastify';
-// import fetch from 'node-fetch';
-import axios from 'axios';
 import open = require('open');
 
 import { AutoBanBotApiClient } from './api-client';
 import { AutoBanBotEventSubListener } from './event-sub-listener';
 import { TmiChatClient } from './tmi-chat-client';
-import { shouldBanBasedOnCreationDate, shouldBanBasedOnUsername } from './banned_users';
+import { shouldBanBasedOnUsername } from './banned_users';
 import { Logger } from './logger';
 import { StreamlabsApiServer } from './streamlabs/streamlabs-api-server';
 import { StreamlabsApiClient } from './streamlabs/streamlabs-api-client';
@@ -35,6 +32,8 @@ const main = async () => {
     const chatPassword = process.env.OAUTH_PASSWORD;
     const chatChannels = [
         'dually8',
+        'ravenousld3341',
+        // 'thatvarious',
         // list your channel(s) here
     ]
 
@@ -100,7 +99,7 @@ const main = async () => {
                 Logger.getInstance().log.info(`No one to ban on channel ${chan} :D`);
             }
             // Bring down the ban hammer
-            followersToBan.map(x => autoBanBotChatClient.ban(x, chan));
+            followersToBan.forEach(x => autoBanBotChatClient.ban(x, chan));
             // Setup listener to watch for bot follows
             autoBanBotEventSubListener.watchFollowEventsByUser(chan);
         });

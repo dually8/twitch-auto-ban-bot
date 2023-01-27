@@ -1,1 +1,1 @@
-node .\dist\bot.js
+C:\\Users\\duall\\AppData\\Roaming\\nvm\\v16.11.1\\node.exe "C:\Users\duall\repos\twitch-bot\dist\bot.js"
