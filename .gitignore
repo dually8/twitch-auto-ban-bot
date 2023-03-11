@@ -3,3 +3,5 @@ dist/
 node_modules/
 *.bak
 token.db
+src/twitch-bot-logs/*
+!src/twitch-bot-logs/.gitkeep

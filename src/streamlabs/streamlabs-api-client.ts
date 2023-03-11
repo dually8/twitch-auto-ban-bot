@@ -20,7 +20,7 @@ export class StreamlabsApiClient {
 
     public async getAlertStatus(): Promise<GetAlertStatusResponse> {
         try {
-            const accessToken = await StreamlabsApiRepo.getAccessToken();
+            const accessToken = await StreamlabsApiRepo.getStreamlabsAccessToken();
             const response = await axios.get(`${STREAMLABS_API_BASE}/alerts/get_status`, {
                 params: {
                     "access_token": accessToken,
@@ -36,7 +36,7 @@ export class StreamlabsApiClient {
 
     public async pauseAlerts(): Promise<PauseAlertQueueResponse> {
         try {
-            const accessToken = await StreamlabsApiRepo.getAccessToken();
+            const accessToken = await StreamlabsApiRepo.getStreamlabsAccessToken();
             const response = await axios.post(`${STREAMLABS_API_BASE}/alerts/pause_queue`, {
                 "access_token": accessToken,
             });
@@ -50,7 +50,7 @@ export class StreamlabsApiClient {
 
     public async unpauseAlerts(): Promise<PauseAlertQueueResponse> {
         try {
-            const accessToken = await StreamlabsApiRepo.getAccessToken();
+            const accessToken = await StreamlabsApiRepo.getStreamlabsAccessToken();
             const response = await axios.post(`${STREAMLABS_API_BASE}/alerts/unpause_queue`, {
                 "access_token": accessToken,
             });
@@ -64,7 +64,7 @@ export class StreamlabsApiClient {
 
     public async skipAlert(): Promise<SkipAlertResponse> {
         try {
-            const accessToken = await StreamlabsApiRepo.getAccessToken();
+            const accessToken = await StreamlabsApiRepo.getStreamlabsAccessToken();
             const response = await axios.post(`${STREAMLABS_API_BASE}/alerts/skip`, {
                 "access_token": accessToken,
             });
@@ -78,7 +78,7 @@ export class StreamlabsApiClient {
 
     public async sendTestAlert(type: TestAlertType = 'donation'): Promise<SendTestAlertResponse> {
         try {
-            const accessToken = await StreamlabsApiRepo.getAccessToken();
+            const accessToken = await StreamlabsApiRepo.getStreamlabsAccessToken();
             const response = await axios.post(`${STREAMLABS_API_BASE}/alerts/send_test_alert`, {
                 "access_token": accessToken,
             });

@@ -1,18 +1,19 @@
 // Make it to where we can use process.env.WHATEVER
 require('dotenv').config();
 
-import { StaticAuthProvider } from '@twurple/auth';
+import { AppTokenAuthProvider, StaticAuthProvider, RefreshingAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 import { NgrokAdapter } from '@twurple/eventsub-ngrok';
 import open = require('open');
 
 import { AutoBanBotApiClient } from './api-client';
-import { AutoBanBotEventSubListener } from './event-sub-listener';
+import { AutoBanBotEventSubListener, EventSubListenerParams } from './event-sub-listener';
 import { TmiChatClient } from './tmi-chat-client';
 import { shouldBanBasedOnUsername } from './banned_users';
 import { Logger } from './logger';
 import { StreamlabsApiServer } from './streamlabs/streamlabs-api-server';
 import { StreamlabsApiClient } from './streamlabs/streamlabs-api-client';
+import { StreamlabsApiRepo } from './streamlabs/streamlabs-api-repo';
 
 const main = async () => {
     // Twitch app
@@ -31,15 +32,33 @@ const main = async () => {
     const chatUsername = process.env.TWITCH_USERNAME;
     const chatPassword = process.env.OAUTH_PASSWORD;
     const chatChannels = [
-        // 'dually8',
-        'ravenousld3341',
+        'dually8',
+        // 'ravenousld3341',
         // 'thatvarious',
         // list your channel(s) here
-    ]
+    ];
 
-    const authProvider = new StaticAuthProvider(clientId, clientSecret);
+    const tokenData = JSON.parse(await StreamlabsApiRepo.getTwurpleTokenData());
+    const userAuthProvider = new RefreshingAuthProvider({
+        clientId,
+        clientSecret,
+        onRefresh: async (userId, newTokenData) => {
+            Logger.logInfo(`UserId: ${userId}`)
+            Logger.logInfo(newTokenData);
+            await StreamlabsApiRepo.setTwurpleTokens(
+                userId.trim(),
+                JSON.stringify(newTokenData).trim()
+            );
+        }
+    });
+    if (tokenData && tokenData.accessToken) {
+        const result = await userAuthProvider.addUserForToken(tokenData);
+        Logger.logInfo('Added user: ' + result);
+    }
+    const appAuthProvider = new AppTokenAuthProvider(clientId, clientSecret);
     const adapter = new NgrokAdapter();
-    const autoBanBotApiClient = new AutoBanBotApiClient(authProvider);
+    const autoBanBotApiClient = new AutoBanBotApiClient(userAuthProvider, chatUsername);
+    await autoBanBotApiClient.setup();
     const autoBanBotChatClient = new TmiChatClient({
         channels: chatChannels.map(channel => `#${channel}`),
         connection: {
@@ -64,7 +83,7 @@ const main = async () => {
     try {
         const port = parseInt(process.env.FASTIFY_PORT, 10) || 8080;
         await streamlabsServer.setup(port);
-        open(`http://localhost:${port}`);
+        // open(`http://localhost:${port}`); // TODO: re-enable later
     } catch (err) {
         Logger.logError(`Couldn't setup server`, { err });
     }
@@ -76,16 +95,17 @@ const main = async () => {
         chatChannels.forEach(c => console.log(`Chat bot connected to ${c}`));
         const eventSubListenerConfig = {
             config: {
-                apiClient: new ApiClient({ authProvider }),
+                apiClient: new ApiClient({ authProvider: appAuthProvider }),
                 adapter,
-                secret
+                secret,
+                legacySecrets: true,
             },
             apiClient: autoBanBotApiClient,
             chatClient: autoBanBotChatClient,
             streamlabsClient: streamlabsClient,
             clientId: clientId,
             clientSecret: clientSecret,
-        }
+        } as EventSubListenerParams;
         const autoBanBotEventSubListener = new AutoBanBotEventSubListener(eventSubListenerConfig);
 
         await autoBanBotEventSubListener.clearAllSubscriptions();

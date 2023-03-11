@@ -1,4 +1,4 @@
-import { StaticAuthProvider } from '@twurple/auth';
+import { RefreshingAuthProvider, StaticAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 import { Logger } from './logger';
 
@@ -7,15 +7,20 @@ export class AutoBanBotApiClient {
     private _modId = '';
 
     constructor(
-        private _authProvider: StaticAuthProvider,
+        private _authProvider: StaticAuthProvider | RefreshingAuthProvider,
+        private chatUserName: string,
     ) {
         this._apiClient = new ApiClient({ authProvider: _authProvider });
-        this.setModId();
     }
+
+    async setup() {
+        await this.setModId();
+    }
+
     private async setModId() {
         try {
-            const tokenInfo = await this._apiClient.getTokenInfo();
-            this._modId = tokenInfo?.userId || '';
+            const user = await this._apiClient.users.getUserByName(this.chatUserName);
+            this._modId = user?.id || '';
         } catch (err) {
             Logger.logError({ setModIdError: err });
         }

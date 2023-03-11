@@ -80,7 +80,7 @@ export class AutoBanBotEventSubListener {
         this.chatClient.ban(follower, channel);
         // TODO: Replace this channel with your own if you're not dually8
         if (channel.includes('dually8')) {
-            const accessToken = await StreamlabsApiRepo.getAccessToken();
+            const accessToken = await StreamlabsApiRepo.getStreamlabsAccessToken();
             if (accessToken) {
                 this.streamlabsClient.skipAlert();
             }

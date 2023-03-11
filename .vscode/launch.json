@@ -15,6 +15,7 @@
             "args": [
                 "${workspaceFolder}/src/bot.ts"
             ],
+            "cwd": "${workspaceFolder}",
             "env": {
                 "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json"
             }

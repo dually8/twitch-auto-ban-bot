@@ -27,7 +27,7 @@ export class StreamlabsApiServer {
     public setup(port = 8080): Promise<void> {
         return new Promise((resolve, reject) => {
             this.server.get('/', async (request, reply) => {
-                const accessToken = await StreamlabsApiRepo.getAccessToken();
+                const accessToken = await StreamlabsApiRepo.getStreamlabsAccessToken();
                 if (!accessToken) {
                     let auth_url = `${STREAMLABS_API_BASE}/authorize?`;
                     let params = {
@@ -63,7 +63,7 @@ export class StreamlabsApiServer {
 
                 const { data } = response;
                 if (data && data.access_token && data.refresh_token) {
-                    await StreamlabsApiRepo.setTokens(data.access_token, data.refresh_token);
+                    await StreamlabsApiRepo.setStreamlabsTokens(data.access_token, data.refresh_token);
                 }
                 reply.redirect('/');
             });
