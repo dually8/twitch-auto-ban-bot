@@ -1,4 +1,4 @@
-import { EventSubListener, EventSubListenerConfig } from '@twurple/eventsub';
+import { EventSubHttpListener, EventSubHttpListenerConfig } from '@twurple/eventsub-http';
 import axios from 'axios';
 import { AutoBanBotApiClient } from './api-client';
 import { shouldBanBasedOnCreationDate, shouldBanBasedOnUsername } from './banned_users';
@@ -8,7 +8,7 @@ import { StreamlabsApiClient } from './streamlabs/streamlabs-api-client';
 import { StreamlabsApiRepo } from './streamlabs/streamlabs-api-repo';
 
 export type EventSubListenerParams = {
-    config: EventSubListenerConfig;
+    config: EventSubHttpListenerConfig;
     apiClient: AutoBanBotApiClient;
     streamlabsClient: StreamlabsApiClient;
     chatClient: IChatClient;
@@ -16,8 +16,9 @@ export type EventSubListenerParams = {
     clientSecret: string;
 }
 export class AutoBanBotEventSubListener {
-    private readonly _listener: EventSubListener;
+    private readonly _listener: EventSubHttpListener;
     private _bearerToken = '';
+    private _modId = '';
 
     private get apiClient() {
         return this.params.apiClient;
@@ -30,7 +31,8 @@ export class AutoBanBotEventSubListener {
     }
 
     constructor(private params: EventSubListenerParams) {
-        this._listener = new EventSubListener(this.params.config);
+        this._listener = new EventSubHttpListener(this.params.config);
+        this.setModId();
         this.listen();
     }
 
@@ -43,19 +45,21 @@ export class AutoBanBotEventSubListener {
                 throw new Error(`Could not retrieve userId from ${user}`);
             }
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 watchFollowEventsByUserError: err
             });
         }
     }
 
     private async subscribeToChannelFollowEvents(userId: string) {
-        try {
-            await this._listener.subscribeToChannelFollowEvents(userId, async (event) => {
+        this._listener.onChannelFollow(
+            userId,
+            this._modId,
+            async (event) => {
                 const userInfo = await this.apiClient.getUserInfo(event.userName);
                 const isBannableDate = shouldBanBasedOnCreationDate(userInfo?.creationDate);
                 const isBannableUsername = shouldBanBasedOnUsername(event.userName);
-                Logger.getInstance().log.info({
+                Logger.logInfo({
                     followEvent: event,
                     isBannableUsername,
                     isBannableDate,
@@ -67,14 +71,12 @@ export class AutoBanBotEventSubListener {
                 } else {
                     this.chatClient.say(channel, `Thank you for following ${follower}!`);
                 }
-            })
-        } catch (followEventError) {
-            Logger.getInstance().log.error({ followEventError })
-        }
+            }
+        ).start();
     }
 
     private async banFollower(follower: string, channel: string) {
-        Logger.getInstance().log.info(`Banning new follower ${follower}. Probably a bot.`);
+        Logger.logInfo(`Banning new follower ${follower}. Probably a bot.`);
         this.chatClient.ban(follower, channel);
         // TODO: Replace this channel with your own if you're not dually8
         if (channel.includes('dually8')) {
@@ -89,16 +91,16 @@ export class AutoBanBotEventSubListener {
         try {
             const userId = await this.getId(user);
             if (userId) {
-                this._listener.subscribeToChannelUpdateEvents(userId, (event) => {
-                    Logger.getInstance().log.info({
+                this._listener.onChannelUpdate(userId, (event) => {
+                    Logger.logInfo({
                         channelUpdateEvent: event,
                     });
-                }).catch((channelUpdateError) => Logger.getInstance().log.error({ channelUpdateError }));
+                }).start();
             } else {
                 throw new Error(`Could not retrieve userId from ${user}`);
             }
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 watchChannelUpdateError: err
             });
         }
@@ -109,14 +111,14 @@ export class AutoBanBotEventSubListener {
             await this.setBearerToken();
             const events = await this.getEvents();
             if (events && events.data && events.data.length > 0) {
-                Logger.getInstance().log.info(`Clearing ${events.data.length} event(s)`);
+                Logger.logInfo(`Clearing ${events.data.length} event(s)`);
                 await Promise.all(events.data.map(e => this.deleteEventSubscription(e.id)));
-                Logger.getInstance().log.info(`Done clearing events`);
+                Logger.logInfo(`Done clearing events`);
             } else {
-                Logger.getInstance().log.info(`No events to clear`);
+                Logger.logInfo(`No events to clear`);
             }
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 clearAllSubsError: err,
             });
         }
@@ -124,16 +126,25 @@ export class AutoBanBotEventSubListener {
 
     private async listen() {
         try {
-            await this._listener.listen();
-            Logger.getInstance().log.info('listening...');
+            this._listener.start();
+            Logger.logInfo('listening...');
         } catch (err) {
-            Logger.getInstance().log.error({ listenError: err });
+            Logger.logError({ listenError: err });
         }
     }
 
     private async getId(username: string) {
         const userInfo = await this.apiClient.getUserInfo(username);
         return userInfo && userInfo.id || '';
+    }
+
+    private async setModId() {
+        try {
+            const tokenInfo = await this._listener._apiClient.getTokenInfo();
+            this._modId = tokenInfo?.userId || '';
+        } catch (err) {
+            Logger.logError({ setModIdError: err });
+        }
     }
 
     private async deleteEventSubscription(id: string) {

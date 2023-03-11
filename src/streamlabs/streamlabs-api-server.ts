@@ -70,13 +70,13 @@ export class StreamlabsApiServer {
 
             this.server.listen(port, (err, address) => {
                 if (err) {
-                    Logger.getInstance().log.error(`Error starting fastify server: ${err.message}`);
-                    Logger.getInstance().log.error({err});
+                    Logger.logError(`Error starting fastify server: ${err.message}`);
+                    Logger.logError({err});
                     this.server.log.error(err);
                     reject(err);
                     process.exit(1);
                 }
-                Logger.getInstance().log.info(`Server listening at ${address}`);
+                Logger.logInfo(`Server listening at ${address}`);
                 resolve();
             });
         });

@@ -1,7 +1,7 @@
 // Make it to where we can use process.env.WHATEVER
 require('dotenv').config();
 
-import { ClientCredentialsAuthProvider } from '@twurple/auth';
+import { StaticAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 import { NgrokAdapter } from '@twurple/eventsub-ngrok';
 import open = require('open');
@@ -31,13 +31,13 @@ const main = async () => {
     const chatUsername = process.env.TWITCH_USERNAME;
     const chatPassword = process.env.OAUTH_PASSWORD;
     const chatChannels = [
-        'dually8',
+        // 'dually8',
         'ravenousld3341',
         // 'thatvarious',
         // list your channel(s) here
     ]
 
-    const authProvider = new ClientCredentialsAuthProvider(clientId, clientSecret);
+    const authProvider = new StaticAuthProvider(clientId, clientSecret);
     const adapter = new NgrokAdapter();
     const autoBanBotApiClient = new AutoBanBotApiClient(authProvider);
     const autoBanBotChatClient = new TmiChatClient({
@@ -50,9 +50,9 @@ const main = async () => {
             username: chatUsername,
             password: chatPassword,
         },
-        // options: {
-        //     debug: true,
-        // },
+        options: {
+            debug: true,
+        },
     });
     const streamlabsServer = new StreamlabsApiServer({
         clientId: streamlabsClientId,
@@ -66,13 +66,14 @@ const main = async () => {
         await streamlabsServer.setup(port);
         open(`http://localhost:${port}`);
     } catch (err) {
-        Logger.getInstance().log.error(`Couldn't setup server`, { err });
+        Logger.logError(`Couldn't setup server`, { err });
     }
 
     try {
         await autoBanBotChatClient.setup();
 
-        chatChannels.forEach(c => autoBanBotChatClient.say(c, `Auto Ban Bot has connected!`));
+        // chatChannels.forEach(c => autoBanBotChatClient.say(c, `Auto Ban Bot has connected!`));
+        chatChannels.forEach(c => console.log(`Chat bot connected to ${c}`));
         const eventSubListenerConfig = {
             config: {
                 apiClient: new ApiClient({ authProvider }),
@@ -94,18 +95,18 @@ const main = async () => {
             // Filter them by the ones you want to ban
             const followersToBan = followers.filter(x => shouldBanBasedOnUsername(x));
             if (followersToBan.length > 0) {
-                Logger.getInstance().log.info(`Need to ban ${followersToBan.join(', ')} on channel ${chan}`);
+                Logger.logInfo(`Need to ban ${followersToBan.join(', ')} on channel ${chan}`);
             } else {
-                Logger.getInstance().log.info(`No one to ban on channel ${chan} :D`);
+                Logger.logInfo(`No one to ban on channel ${chan} :D`);
             }
             // Bring down the ban hammer
             followersToBan.forEach(x => autoBanBotChatClient.ban(x, chan));
             // Setup listener to watch for bot follows
             autoBanBotEventSubListener.watchFollowEventsByUser(chan);
         });
-        Logger.getInstance().log.debug('Ready to go!');
+        Logger.logInfo('Ready to go!');
     } catch (chatSetupError) {
-        Logger.getInstance().log.error({ chatSetupError })
+        Logger.logError({ chatSetupError })
     }
 }
 

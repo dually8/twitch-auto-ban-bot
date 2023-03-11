@@ -29,4 +29,16 @@ export class Logger {
         }
         return Logger.instance;
     }
+
+    public static logInfo(...args) {
+        Logger.getInstance().log.info(args);
+    }
+
+    public static logWarning(...args) {
+        Logger.getInstance().log.warn(args);
+    }
+
+    public static logError(...args) {
+        Logger.getInstance().log.error(args);
+    }
 }

@@ -16,7 +16,7 @@ export class StreamlabsApiRepo {
         this._db = new sqlite.Database(pathToDb);
         this._db.serialize(() => {
             this._db.run("CREATE TABLE IF NOT EXISTS `streamlabs_auth` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `access_token` CHAR(50), `refresh_token` CHAR(50))");
-            Logger.getInstance().log.info(`creating db...`);
+            Logger.logInfo(`creating db...`);
         });
     }
 

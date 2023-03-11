@@ -28,7 +28,7 @@ export class StreamlabsApiClient {
             });
             return response.data as GetAlertStatusResponse;
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 getAlertStatusError: err,
             });
         }
@@ -42,7 +42,7 @@ export class StreamlabsApiClient {
             });
             return response.data as PauseAlertQueueResponse;
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 pauseAlertsError: err,
             });
         }
@@ -56,7 +56,7 @@ export class StreamlabsApiClient {
             });
             return response.data as UnpauseAlertQueueResponse;
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 unpauseAlertsError: err,
             });
         }
@@ -70,7 +70,7 @@ export class StreamlabsApiClient {
             });
             return response.data as SkipAlertResponse;
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 skipAlertError: err,
             });
         }
@@ -84,7 +84,7 @@ export class StreamlabsApiClient {
             });
             return response.data as UnpauseAlertQueueResponse;
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 sendTestAlertError: err,
             });
         }

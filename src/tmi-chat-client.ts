@@ -26,72 +26,79 @@ export class TmiChatClient implements IChatClient {
             this.onMessage();
             await this.connect();
         } catch (err) {
-            Logger.getInstance().log.error({ setupError: err });
+            Logger.logError({ setupError: err });
         }
     }
     public async say(channel: string, msg: string): Promise<void> {
         try {
             await this._chatClient.say(channel, msg);
         } catch (err) {
-            Logger.getInstance().log.error({
+            Logger.logError({
                 sayErr: err
             });
         }
     }
-    ban(user: string, channel: string, reason: string = 'Bot account'): void {
-        this._chatClient.ban(channel, user, reason)
-            .then(() => Logger.getInstance().log.info(`Successfully banned ${user}`))
-            .catch((err) => {
-                Logger.getInstance().log.error({ banError: err });
-                this._chatClient.mods(channel)
-                    .then((mods) => {
-                        this.say(channel, `I could not automatically ban @${user}. Moderator(s) @${mods.join(', @')}, please do this for me.`);
-                    });
-            });
+    public async ban(user: string, channel: string, reason: string = 'Bot account'): Promise<void> {
+        try {
+            await this._chatClient.ban(channel, user, reason);
+            Logger.logInfo(`Successfully banned ${user}`);
+        } catch (err) {
+            Logger.logError({ banError: err });
+            this.callOnMods(channel, user);
+        }
+    }
+
+    private async callOnMods(channel: string, user: string) {
+        try {
+            const mods = await this._chatClient.mods(channel);
+            this.say(channel, `I could not automatically ban @${user}. Moderator(s) @${mods.join(', @')}, please do this for me.`);
+        } catch (err) {
+            Logger.logError({ callOnModsError: err });
+        }
     }
 
     private async connect() {
         try {
-            Logger.getInstance().log.info('trying to connect...');
+            Logger.logInfo('trying to connect...');
             if (!this.isConnected) {
                 await this._chatClient.connect();
-                Logger.getInstance().log.info('connected :)');
+                Logger.logInfo('connected :)');
             } else {
-                Logger.getInstance().log.info('Already connected');
+                Logger.logInfo('Already connected');
             }
         } catch (err) {
-            Logger.getInstance().log.error({ chatClientConnectionError: err })
+            Logger.logError({ chatClientConnectionError: err })
         }
     }
     private async onConnect() {
         this._chatClient.on('connected', (address, port) => {
-            Logger.getInstance().log.info(`Connected on ${address}:${port}`);
+            Logger.logInfo(`Connected on ${address}:${port}`);
             this._isConnected = true;
         });
     }
     private async onDisconnect() {
         this._chatClient.on('disconnected', (reason) => {
             this._isConnected = false;
-            Logger.getInstance().log.info(`Got disconnected: ${reason}`);
+            Logger.logInfo(`Got disconnected: ${reason}`);
         });
     }
     private onJoin() {
         this._chatClient.on('join', (channel, username, self) => {
-            Logger.getInstance().log.info({
+            Logger.logInfo({
                 onJoin: {
                     channel, username, self
                 }
             });
             if (self) return;
             if (shouldBanBasedOnUsername(username)) {
-                Logger.getInstance().log.info(`Banning ${username}. User matched bannable list/regex.`);
+                Logger.logInfo(`Banning ${username}. User matched bannable list/regex.`);
                 this.ban(username, channel);
             }
         });
     }
     private onBan() {
         this._chatClient.on('ban', (channel, username, reason) => {
-            Logger.getInstance().log.info({
+            Logger.logInfo({
                 onBan: {
                     channel, username, reason
                 }
@@ -101,7 +108,7 @@ export class TmiChatClient implements IChatClient {
     }
     private onHost() {
         this._chatClient.on('hosted', (channel, username, viewers, autohost) => {
-            Logger.getInstance().log.info({
+            Logger.logInfo({
                 onHost: {
                     channel, username, viewers, autohost,
                 }
@@ -111,7 +118,7 @@ export class TmiChatClient implements IChatClient {
     }
     private onRaid() {
         this._chatClient.on('raided', (channel, username, viewers) => {
-            Logger.getInstance().log.info({
+            Logger.logInfo({
                 onRaid: {
                     channel, username, viewers
                 }
@@ -123,7 +130,7 @@ export class TmiChatClient implements IChatClient {
         this._chatClient.on('message', async (channel, userstate, message, self) => {
             if (self) return;
             const user = userstate.username;
-            Logger.getInstance().log.info(`${user} in ${channel} says '${message}'`);
+            Logger.logInfo(`${user} in ${channel} says '${message}'`);
             if (message.toLowerCase() === '!saysomething') {
                 this.say(channel, `You got somethin' to say to me, @${user}?`);
             } else if (shouldBanBasedOnTerm(message)) {
@@ -133,7 +140,7 @@ export class TmiChatClient implements IChatClient {
                 if (![...vips, ...mods, broadcaster].includes(user)) {
                     this.ban(userstate.username, channel, 'Using banned term');
                 } else {
-                    Logger.getInstance().log.info(`${user} in ${channel} is either a mod, vip, or the broadcaster, so we won't ban them for saying a bad word.`)
+                    Logger.logInfo(`${user} in ${channel} is either a mod, vip, or the broadcaster, so we won't ban them for saying a bad word.`)
                     this.say(channel, `Watch your mouth @${user}. That's a banned term. Do it again and I'll smack you.`);
                 }
             }
