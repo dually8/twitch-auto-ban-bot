@@ -1,5 +1,9 @@
 # Auto Ban Bot
 
+## DEPRECATION NOTICE
+
+Due to recent updates with Twitch's API, you can no longer use chat commands via IRC, nor can you use a single auth provider to run a bot. I've done my best to try and circumvent this, but I never had any luck. Because of this, I've decided to archive this repository. If I get the urge to try and tackle this again at some point, perhaps I'll unarchive it, but this brick wall seems unclimbable at this point.
+
 ## Requirements
 
 - NodeJS
